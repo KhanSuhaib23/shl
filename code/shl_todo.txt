@@ -1,0 +1,16 @@
+Plan of Action
+
+See the diagram at documentation/shl_plan_of_action.md.html
+
+We have these following modules
+
+1. Memory System (Memory Allocator) *
+2. File IO *
+3. Controller IO *
+4. Audio
+5. Time *
+6. Threading *
+7. SIMD
+8. Windows Keyboard and Mouse *
+9. Math Utils
+
