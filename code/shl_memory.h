@@ -1,6 +1,7 @@
 // NOTE(Suhaib): Memory Allocating might be too hard for me now and too complex, avoid it for now
 
 #include <stdint.h>
+#include <malloc.h>
 
 #define s32 int32_t
 #define u32 uint32_t
@@ -10,9 +11,31 @@
 #ifndef SHL_MEMORY_H
 	
 	#define SHL_MEMORY_H
+	
+	#if !defined(SHL_PLATFORM_DETECTED)
+		#define SHL_PLATFORM_DETECTED
 
+		#if defined(_WIN32)
 
-	#if defined(SHL_CPP)
+			#if defined(_WIN64)
+				#define SHL_WIN32
+				#define SHL_WIN
+			#else 
+				#define SHL_WIN64
+				#define SHL_WIN
+			#endif 
+
+		#endif
+
+		#if defined(__cplusplus)
+			#define SHL_IS_CPP
+		#else
+			#define SHL_IS_C
+		#endif
+
+	#endif
+
+	#if defined(SHL_IS_CPP)
 		#if defined(SHL_MEMORY_STATIC)
 			#define SHLAPI static extern "C"
 		#else

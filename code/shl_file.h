@@ -19,9 +19,9 @@
 		#endif
 
 		#if defined(__cplusplus)
-			#define SHL_CPP
+			#define SHL_IS_CPP
 		#else
-			#define SHL_C
+			#define SHL_IS_C
 		#endif
 
 	#endif
@@ -31,7 +31,7 @@
 		#include <windows.h>
 	#endif
 
-	#if defined(SHL_CPP)
+	#if defined(SHL_IS_CPP)
 		#if defined(SHL_FILE_STATIC)
 			#define SHLAPI static extern "C"
 		#else

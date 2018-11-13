@@ -21,16 +21,16 @@
 		#endif
 
 		#if defined(__cplusplus)
-			#define SHL_CPP
+			#define SHL_IS_CPP
 		#else
-			#define SHL_C
+			#define SHL_IS_C
 		#endif
 
 	#endif
 
 	#if !defined(SHL_PLATFORM_API_DEF)
 		#define SHL_PLATFORM_API_DEF
-		#if defined(SHL_CPP)
+		#if defined(SHL_IS_CPP)
 			#if defined(SHL_TIME_STATIC)
 				#define SHLAPI static extern "C"
 			#else

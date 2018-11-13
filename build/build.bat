@@ -2,8 +2,8 @@
 
 set CommonCompilerFlags=/nologo /MD /EHsc /Od /Zi /W4 /wd4100 /wd4099 /wd4204 /wd4996 /wd4505 /we4702 /wd4201 /wd4200 /wd4133
 set Defines=/D_CRT_SECURE_NO_WARNINGS
-set FilesToCompile=../code/main.cpp
-set LinkLibraries=Kernel32.lib
+set FilesToCompile=../code/main.c
+set LinkLibraries=Kernel32.lib Ole32.lib
 
 
 cl %CommonCompilerFlags% %Defines% %FilesToCompile% /link %AdditionalLibDirectories% %LinkLibraries%
