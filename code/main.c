@@ -309,8 +309,6 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-#else
-
 #include <stdio.h>
 #include <stdint.h>
 #include <windows.h>
@@ -350,6 +348,63 @@ int main()
 	printf("%lld\n",  TIME(size / offset));
 
 	return 0;
+}
+
+
+
+
+
+#define SHL_TIME_IMPLEMENTATION
+#define SHL_TIME_STATIC
+#include "shl_time.h"
+#include <stdio.h>
+
+
+int main(int argc, char** argv)
+{
+	shl_time_init();
+
+	shl_time start = shl_get_base_time_struct();
+
+	double wait = 5.0;
+
+	double st = shl_get_base_time();
+
+	while (shl_get_elapsed_time(st) <= wait);
+
+	shl_write_elapsed_time_struct(&start);
+
+	double sec = shl_get_elapsed_time(st);
+
+	printf("seconds: %lf\nmilliseconds: %lf\nmicroseconds: %lf\nnanoseconds: %lf\n\n", sec, MILLISECONDS(sec), MICROSECONDS(sec), 
+	NANOSECONDS(sec));
+
+
+}
+#else
+
+#include <stdio.h>
+
+#define SHL_TIME_IMPLEMENTATION
+#include "shl_time.h"
+
+#define SHL_THREAD_IMPLEMENTATION
+#include "shl_thread.h"
+
+// #define SHL_PLATFORM_IMPLEMENTATION
+// #include "shl_platform.h"
+
+
+
+
+int main(int argc, char** argv)
+{
+	// printf("%s\n", __FUNCTION__);
+
+
+	// shl_time_init();
+
+
 }
 
 

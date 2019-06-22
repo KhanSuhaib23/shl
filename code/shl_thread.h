@@ -57,6 +57,8 @@
 
 
 	#if defined(SHL_WIN)
+		#undef _WIN32_WINNT
+		#define _WIN32_WINNT 0x0600
 		#include <windows.h>
 	#endif
 
@@ -283,7 +285,7 @@
 			#if SHL_THREAD_ARG_CHECK
 				if (semaphore)
 				{
-					semaphore->handle = CreateSemaphoreEx(0, initial_count, maximum_count, NULL, 0, SYNCHRONIZE | SEMAPHORE_MODIFY_STATE);	
+					semaphore->handle = CreateSemaphoreEx(0, initial_count, maximum_count, NULL, 0, SYNCHRONIZE | SEMAPHORE_MODIFY_STATE);
 					semaphore->full_event = CreateEvent(NULL, FALSE, TRUE, NULL);
 					result = 1;
 				}

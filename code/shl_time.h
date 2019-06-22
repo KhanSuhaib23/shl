@@ -33,7 +33,7 @@ SHLAPI void shl_time_init ();
 	* initializes the frequency value (used in conversion from cycles to seconds)
 	* must be called before calling any other function
 
-SHLAPI f64 shl_get_time ();
+SHLAPI f64 shl_get_base_time ();
 
 	* gets a time in seconds
 	* the starting point (base) is platform based 
@@ -41,10 +41,10 @@ SHLAPI f64 shl_get_time ();
 
 SHLAPI f64 shl_get_elapsed_time (f64 start_time);
 
-	* pass in the time gotten from the shl_get_time function
+	* pass in the time gotten from the shl_get_base_time function
 	* it returns the time elapsed in seconds from that base
 
-SHLAPI u64 shl_get_cycle ();
+SHLAPI u64 shl_get_base_cycle ();
 
 	* gets the number of cycles
 	* the starting point (base) is *usually* the time from the most recent time computer was powered up
@@ -52,10 +52,10 @@ SHLAPI u64 shl_get_cycle ();
 
 SHLAPI u64 shl_get_elapsed_cycles (u64 start_cycle);
 
-	* pass in the cycle count gotten from the shl_get_cycle function
+	* pass in the cycle count gotten from the shl_get_base_cycle function
 	* it returns the cycles elapsed from that base
 
-SHLAPI shl_time shl_get_time_struct ();
+SHLAPI shl_time shl_get_base_time_struct ();
 
 	* gets a time struct getting a convinient list of info
 	* the struct provides cycle count, time in seconds (double), milliseconds (double), microseconds (double and long long),
@@ -100,6 +100,12 @@ Defines
 
 */
 
+
+/*  Notes
+	
+	TDM-GCC seems to work for compiling this (__rdtsc is there for gcc as well)
+ */
+
 ///////////////////////////////
 //          shl_time         //
 ///////////////////////////////
@@ -141,6 +147,7 @@ Defines
 		#define SHL_IS_C
 	#endif
 
+
 #endif
 
 // based on whether user is using C/C++ and whether they want internal functions or not we define 
@@ -163,10 +170,10 @@ Defines
 
 
 // TODO: the CPU intrinsics to get the cycle count may not be same for all CPU architectures
-#define shl__cpucycle_intrinsic __rdtsc()
-
 
 #if defined(SHL_WIN)
+	#undef _WIN32_WINNT
+	#define _WIN32_WINNT 0x0600
 	#include <windows.h>
 #endif
 
@@ -185,20 +192,29 @@ typedef struct shl_time
 	u64 unanoseconds;
 } shl_time;
 
-SHLAPI void          shl_time_init                 ();
-SHLAPI f64           shl_get_time                  ();
-SHLAPI f64           shl_get_elapsed_time          (f64 start_time);
-SHLAPI u64           shl_get_cycle                 ();
-SHLAPI u64           shl_get_elapsed_cycles        (u64 start_cycle);
-SHLAPI shl_time      shl_get_time_struct           ();
-SHLAPI shl_time      shl_get_elapsed_time_struct   (shl_time start);
-SHLAPI u32           shl_write_elapsed_time_struct (shl_time* start);
+SHLAPI void          shl_time_init                   ();
+SHLAPI f64           shl_get_base_time               ();
+SHLAPI f64           shl_get_elapsed_time            (f64 start_time);
+SHLAPI u64           shl_get_base_cycle              ();
+SHLAPI u64           shl_get_elapsed_cycles          (u64 start_cycle);
+SHLAPI shl_time      shl_get_base_time_struct        ();
+SHLAPI shl_time      shl_get_elapsed_time_struct     (shl_time start);
+SHLAPI u32           shl_write_elapsed_time_struct   (shl_time* start);
 #endif // shl time definitions end
 
 
 #ifdef SHL_TIME_IMPLEMENTATION
 
 static f64 shl__frequency;
+
+static u64 shl__cpucycle_intrinsic() 
+{
+	MemoryBarrier();
+	u64 value = __rdtsc();
+	MemoryBarrier();
+
+	return value;
+} 
 
 SHLAPI void shl_time_init()
 {
@@ -209,7 +225,7 @@ SHLAPI void shl_time_init()
     shl__frequency = (f64) freq.QuadPart;
 }
 
-SHLAPI f64 shl_get_time()
+SHLAPI f64 shl_get_base_time()
 {
     LARGE_INTEGER time;
     
@@ -227,21 +243,21 @@ SHLAPI f64 shl_get_elapsed_time(f64 start_time)
     return ((f64) time.QuadPart / shl__frequency - start_time);
 }
 
-SHLAPI u64 shl_get_cycle()
+SHLAPI u64 shl_get_base_cycle()
 {
-    return shl__cpucycle_intrinsic;
+    return shl__cpucycle_intrinsic();
 }
 
 SHLAPI u64 shl_get_elapsed_cycles(u64 start_cycle)
 {
-    return shl__cpucycle_intrinsic - start_cycle;
+    return shl__cpucycle_intrinsic() - start_cycle;
 }
 
-SHLAPI shl_time shl_get_time_struct()
+SHLAPI shl_time shl_get_base_time_struct()
 {
 	shl_time time;
-	time.cycles = shl_get_cycle();
-	time.seconds = shl_get_time();
+	time.cycles = shl_get_base_cycle();
+	time.seconds = shl_get_base_time();
 	time.milliseconds = time.seconds * 1000.0;
 	time.fmicroseconds = time.milliseconds * 1000.0;
 	time.umicroseconds = (u64) time.fmicroseconds;
@@ -253,7 +269,7 @@ SHLAPI shl_time shl_get_time_struct()
 
 SHLAPI shl_time shl_get_elapsed_time_struct(shl_time start)
 {
-	shl_time time = shl_get_time_struct();
+	shl_time time = shl_get_base_time_struct();
 
 	time.cycles -= start.cycles;
 	time.seconds -= start.seconds;

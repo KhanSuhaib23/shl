@@ -9,3 +9,6 @@ TODO
 -> Testing the current functionality
 -> Do proper documentation
 
+FUTURE
+-> other compiler support (gcc and clang)
+-> other platform support (linux and unix)

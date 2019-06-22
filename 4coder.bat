@@ -1,2 +1,2 @@
 @echo off
-start H:\Work\4coder\4coder\4ed
+start D:\Applications\4coder\4ed
