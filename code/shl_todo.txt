@@ -1,14 +1,73 @@
+
+shl_audio
+    Not Refactored yet
+    Only Windows
+    Only x64 and maybe x86
+
+shl_buffer
+    Refactored
+    Works for anything as long as you have a realloc implementation
+    Not sure about 32 vs 64 bits
+
+shl_controller
+    Not refactored
+    Only works on Windows
+    Not tested on any any different hardware
+
+shl_file
+    Refactored
+    Works for Windows (64 bits and maybe 32 bits)
+
+shl_memory
+    Not refactored
+    Only works for Windows (no idea about 32 v 64 bits)
+    Uses malloc, have to write my own
+
+shl_platform
+    Not refactored
+    Only for Windows
+
+shl_thread
+    Refactored (maybe split up thread, semaphore and mutex)
+    Works for Windows (no idea about bits)
+
+shl_time
+    Refactored
+    Works for Windows only
+
 11/06/2019
 
-DONE
--> Worked on shl_time
--> Added few convenience functions
--> Added comment documentation 
+    DONE
+        -> Worked on shl_time
+        -> Added few convenience functions
+        -> Added comment documentation 
 
-TODO
--> Testing the current functionality
--> Do proper documentation
+    TODO
+        -> Testing the current functionality*
+        -> Do proper documentation
 
-FUTURE
--> other compiler support (gcc and clang)
--> other platform support (linux and unix)
+    FUTURE
+        -> other compiler support (gcc and clang)
+        -> other platform support (linux and unix)
+
+
+23-06-2019
+
+    DONE
+        -> Better environment setup (the compiler used is dependent upon the console that is started)
+        -> Figure out problem with compilation with gcc
+        -> Worked on shl_time
+        -> Added display and busy wait functions
+        -> Tested the old and the new functionality
+
+    TODO
+        -> Do proper documentation
+        -> Proper inlining
+        -> older gcc version support (__rdtsc)
+        -> older msvc support
+        -> compiler and hardware fences self implemented
+        -> not rdtsc supported CPU
+
+    FUTURE
+        -> clang support
+        -> other OS support

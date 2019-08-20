@@ -26,7 +26,7 @@ set Defines=/D_CRT_SECURE_NO_WARNINGS
 set LinkLibraries=Kernel32.lib Ole32.lib
 
 
-gcc %FilesToCompile% -o main.exe -mwindows
+gcc %FilesToCompile% -o main.exe -lkernel32
 )
 
 

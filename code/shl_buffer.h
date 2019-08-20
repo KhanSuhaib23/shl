@@ -51,7 +51,7 @@
 
 	#define shl__should_grow(buff) ( ( (buff) == 0 || shl__buff_len(buff) == shl__buff_cap(buff) ) ? shl__grow_m(buff) : 0 )
 	#define shl__grow_m(buff) *((void**) &(buff)) = shl__grow(buff, sizeof(*buff))
-	#define shl__reverse_m(buff, cap) *((void**) &(buff)) = shl__reserve(buff, cap, sizeof(*buff))
+	#define shl__reserve_m(buff, cap) *((void**) &(buff)) = shl__reserve(buff, cap, sizeof(*buff))
 
 	#define shl_buffer(type) type##*
 
@@ -59,7 +59,8 @@
 	#define shl_buffer_length(buff) ((buff) ? shl__buff_len(buff) : 0)
 	#define shl_buffer_capacity(buff) ((buff) ? shl__buff_cap(buff) : 0)
 	#define shl_buffer_free(buff) free(shl__buff_head(buff))
-	#define shl_buffer_reserve(buff, cap) ((buff) == 0 || (shl__buff_cap(buff) < (cap)) ?  shl__reverse_m(buff, cap) : 0) 
+	#define shl_buffer_reserve(buff, cap) ((buff) == 0 || (shl__buff_cap(buff) < (cap)) ?  shl__reserve_m(buff, cap) : 0) 
+	#define shl_buffer_expand(buff, len) shl_buffer_reserve(buff, len), shl__buff_len(buff) = len
 
 
 #endif

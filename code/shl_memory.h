@@ -61,21 +61,31 @@
 
 	SHLAPI void* shl_malloc(usize size)
 	{
+		return malloc(size);
+	}
+
+	SHLAPI void shl_free(void* mem)
+	{
+		free(mem);
+	}
+
+
+	SHLAPI void* shl_malloc_wide(usize size)
+	{
 		usize* total_mem = (usize*) malloc(size + sizeof(usize));
 		*total_mem = size;
 		return (void*) (total_mem + 1);
 	}
 
-	SHLAPI void shl_free(void* mem)
+	SHLAPI void shl_free_wide(void* mem)
 	{
 		free((void*) ((usize*) mem - 1));
 	}
 
-	SHLAPI usize shl_memsize(void* mem)
+	SHLAPI usize shl_memsize_wide(void* mem)
 	{
 		return (usize) *((usize*) mem - 1);
 	}
-
 
 #endif
 

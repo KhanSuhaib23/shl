@@ -14,406 +14,444 @@
 *  
 */
 
+// Create API for both reference and values 
+// Change the argument validation code
+
 // NOTE(Suhaib): For some reason gcc doesn;t recogonize Ex functions
 // NOTE(Suhaib): unless /NODEFAULTLIB is specified Kernel32.lib is automatically linked
 // TODO(Suhaib): Writing your own stdint?
 
 
-#include <stdint.h>
-
-#define s32 int32_t
-#define u32 uint32_t
+#define s32 long
+#define u32 unsigned long
 #define ulong unsigned long
 
 #ifndef SHL_THREAD_H
-	#define SHL_THREAD_H
+#define SHL_THREAD_H
 
-	#ifndef SHL_THREAD_ARG_CHECK
-		#define SHL_THREAD_ARG_CHECK 1
-	#endif
-	
-	#if !defined(SHL_PLATFORM_DETECTED)
-		#define SHL_PLATFORM_DETECTED
+#ifndef SHL_THREAD_ARG_VALIDATION
+#define SHL_THREAD_ARG_VALIDATION 1 
+#endif
 
-		#if defined(_WIN32)
+#if !defined(SHL_PLATFORM_DETECTED)
+    #define SHL_PLATFORM_DETECTED
 
-			#if defined(_WIN64)
-				#define SHL_WIN32
-				#define SHL_WIN
-			#else 
-				#define SHL_WIN64
-				#define SHL_WIN
-			#endif 
+    #if defined(_WIN32)
 
-		#endif
+        #if defined(_WIN64)
+            #define SHL_WIN32
+            #define SHL_WIN
+        #else 
+            #define SHL_WIN64
+            #define SHL_WIN
+        #endif 
 
-		#if defined(__cplusplus)
-			#define SHL_IS_CPP
-		#else
-			#define SHL_IS_C
-		#endif
+    #endif
 
-	#endif
+    #if defined(__cplusplus)
+        #define SHL_IS_CPP
+    #else
+        #define SHL_IS_C
+    #endif
 
-
-	#if defined(SHL_WIN)
-		#undef _WIN32_WINNT
-		#define _WIN32_WINNT 0x0600
-		#include <windows.h>
-	#endif
-
-	#if defined(SHL_IS_CPP)
-		#if defined(SHL_THREAD_STATIC)
-			#define SHLAPI static extern "C"
-		#else
-			#define SHLAPI extern "C" 
-		#endif
-	#else
-		#if defined(SHL_THREAD_STATIC)
-			#define SHLAPI static
-		#else
-			#define SHLAPI
-		#endif
-	#endif
+#endif
 
 
-	#include <malloc.h>
+#if defined(SHL_WIN)
+    #undef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0600
+    #include <windows.h>
+#endif
+
+#if defined(SHL_IS_CPP)
+    #if defined(SHL_THREAD_STATIC)
+        #define SHLAPI static extern "C"
+    #else
+        #define SHLAPI extern "C" 
+    #endif
+    // complex literal are defined differently in c and cpp
+    #define SHL_COMP_LIT(type)
+#else
+    #if defined(SHL_THREAD_STATIC)
+        #define SHLAPI static
+    #else
+        #define SHLAPI
+    #endif
+    #define SHL_COMP_LIT(type) (type)
+#endif
 
 
-	typedef ulong (thread_function(void* data));
 
-	typedef struct shl_thread                     shl_thread;
-	typedef struct shl_semaphore                  shl_semaphore;
-	typedef struct shl_mutex                      shl_mutex;
-
-	#if defined(SHL_WIN)
-
-		struct shl_thread
-		{
-		    HANDLE handle;
-		    DWORD id;
-		    thread_function* function;
-		    void* user_data;
-		};
+#include <malloc.h>
 
 
-		struct shl_semaphore
-		{
-		    HANDLE handle;
-		    HANDLE full_event;
-		};
+typedef ulong (thread_function(void* data));
 
-		struct shl_mutex
-		{
-		    HANDLE handle;
-		};
+typedef struct  shl_thread                      shl_thread;
+typedef struct  shl_semaphore                   shl_semaphore;
+typedef struct  shl_mutex                       shl_mutex;
+typedef enum    shl_thread_return_code           shl_thread_return_code;
+typedef struct  shl_thread_return                shl_thread_return;
+
+enum shl_thread_return_code
+{
+    SHL_THREAD_SUCCESS = 0,
+    SHL_THREAD_NATIVE_ERROR = 1,
+    SHL_THREAD_INVALID_ARGS = 2,
+    SHL_THREAD_TIMEOUT = 3,
+};
+
+struct shl_thread_return 
+{
+    shl_thread_return_code return_code;
+    char* return_message;
+    s32 native_return_code;
+    char* native_return_message;
+};
+
+#if defined(SHL_WIN)
 
 
-	#endif
 
-	SHLAPI u32                         shl_create_thread               (shl_thread* thread, thread_function* function, void* data);
-	SHLAPI u32                         shl_start_thread                (shl_thread* thread);
-	SHLAPI u32                         shl_pause_thread                (shl_thread* thread);
-	SHLAPI u32                         shl_terminate_thread            (shl_thread* thread, u32 exit_code);
-	SHLAPI u32                         shl_wait_for_thread             (shl_thread* thread);
-	SHLAPI void*                       shl_get_thread_associated_data  (void* thread_context);
-	SHLAPI shl_thread*                 shl_get_thread_from_context     (void* thread_context);
+struct shl_thread
+{
+    HANDLE handle;
+    DWORD id;
+    thread_function* function;
+    void* user_data;
+    shl_thread_return return_val;
+};
 
-	SHLAPI u32                         shl_create_semaphore            (shl_semaphore* semaphore, s32 initial_count, s32 maximum_count);
-	SHLAPI u32                         shl_semaphore_wait              (shl_semaphore* semaphore);
-	SHLAPI u32                         shl_semaphore_signal            (shl_semaphore* semaphore);
 
-	SHLAPI u32                         shl_create_mutex                (shl_mutex* mutex);
-	SHLAPI u32                         shl_mutex_lock                  (shl_mutex* mutex);
-	SHLAPI u32                         shl_mutex_unlock                (shl_mutex* mutex);
+struct shl_semaphore
+{
+    HANDLE handle;
+    shl_thread_return return_val;
+};
 
-	
+struct shl_mutex
+{
+    HANDLE handle;
+    shl_thread_return return_val;
+};
 
 
 #endif
+
+SHLAPI shl_thread*       shl_create_thread           (shl_thread* thread, thread_function* function, u32 stack_size, void* data);
+SHLAPI shl_thread*       shl_start_thread            (shl_thread* thread);
+SHLAPI shl_thread*       shl_pause_thread            (shl_thread* thread);
+SHLAPI shl_thread*       shl_terminate_thread        (shl_thread* thread, u32 exit_code);
+SHLAPI void*             shl_get_thread_data         (void* thread_context);
+SHLAPI shl_thread*       shl_get_thread_from_context (void* thread_context);
+SHLAPI shl_semaphore*    shl_create_semaphore        (shl_semaphore* semaphore, u32 initial_count, u32 maximum_count);
+SHLAPI shl_semaphore*    shl_semaphore_wait          (shl_semaphore* semaphore);
+SHLAPI shl_semaphore*    shl_semaphore_release       (shl_semaphore* semaphore);
+SHLAPI shl_mutex*        shl_create_mutex            (shl_mutex* mutex);
+SHLAPI shl_mutex*        shl_mutex_lock              (shl_mutex* mutex);
+SHLAPI shl_mutex*        shl_mutex_unlock            (shl_mutex* mutex);
+
+
+
+#define shl_thread_success(object) ((object) != 0 && (object)->return_val.return_code == SHL_THREAD_SUCCESS)
+#define shl_thread_get_return(object) (((object) == 0) ? _shl_def_return() : (object)->return_val)
+
+#endif
+
 
 #if defined(SHL_THREAD_IMPLEMENTATION)
 
-	#if defined(SHL_WIN)
+#define SHL_INF 0
+
+#if defined(SHL_WIN)
+
+shl_thread_return _shl_def_return() {
+    return SHL_COMP_LIT(shl_thread_return) { SHL_THREAD_INVALID_ARGS, "Thread parameter could not be NULL", 0, 0};//(shl_thread_return) { SHL_THREAD_INVALID_ARGS, "Thread parameter could not be NULL", 0, 0};
+}
+
+static void shl_thread_set_native_return(shl_thread_return* return_val)  
+{
+    return_val->native_return_code = GetLastError();
+
+    return_val->native_return_message = "Microsoft Error";
+}
+
+SHLAPI shl_thread* shl_create_thread(shl_thread* thread, thread_function* function, u32 stack_size, void* data)
+{
+    
+    if (thread && function)
+    {
+        thread->user_data = data;
+        thread->handle = CreateThread(NULL, stack_size, (LPTHREAD_START_ROUTINE) function, thread, CREATE_SUSPENDED, &thread->id);
+        
+        if (thread->handle) 
+        {
+            thread->return_val.return_code = SHL_THREAD_SUCCESS;
+        } 
+        else 
+        {
+            thread->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            thread->return_val.return_message = "";
+
+            shl_thread_set_native_return(&thread->return_val);
+        }
+    } 
+    else 
+    {
+        if (thread) 
+        {
+            if (!function) 
+            {
+                thread->return_val.return_code = SHL_THREAD_INVALID_ARGS;
+                thread->return_val.return_message = "Parameter function should not be NULL";
+            }
+
+        }
+    }
+    
+    return thread;
+}
+
+SHLAPI shl_thread* shl_start_thread(shl_thread* thread)
+{
+    if (thread)
+    {
+        DWORD ret = ResumeThread(thread->handle);
+
+        if (ret != -1) 
+        {
+            thread->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else 
+        {
+            thread->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            thread->return_val.return_message = "";
+
+            shl_thread_set_native_return(&thread->return_val);
+        }
+    }
+    
+    return thread;
+}
+
+SHLAPI shl_thread* shl_pause_thread(shl_thread* thread)
+{
+    if (thread)
+    {
+        DWORD ret = SuspendThread(thread->handle);
+
+        if (ret != -1) 
+        {
+            thread->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else
+        {
+            thread->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            thread->return_val.return_message = "";
+
+            shl_thread_set_native_return(&thread->return_val);
+        }
+
+    }
+    
+    return thread;
+}
+
+SHLAPI shl_thread* shl_terminate_thread(shl_thread* thread, u32 exit_code)
+{
+    if (thread)
+    {
+        DWORD ret = TerminateThread(thread->handle, exit_code);
+
+        if (ret) 
+        {
+            thread->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else 
+        {
+            thread->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            thread->return_val.return_message = "";
+
+            shl_thread_set_native_return(&thread->return_val);
+        }
+    }
+
+    return thread;
+}
 
 
-		SHLAPI u32 shl_create_thread(shl_thread* thread, thread_function* function, void* data)
-		{
-			u32 result = 0;
+SHLAPI shl_thread* shl_wait_for_thread(shl_thread* thread, DWORD time_in_ms)
+{
+    if (thread) 
+    {
+        if (time_in_ms == SHL_INF) 
+        {
+            time_in_ms = INFINITE;
+        }
+        
+        DWORD ret = WaitForSingleObject(thread->handle, time_in_ms);
 
-			#if SHL_THREAD_ARG_CHECK
+        if (ret == WAIT_OBJECT_0) 
+        {
+            thread->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else if (ret == WAIT_TIMEOUT) 
+        {
+            thread->return_val.return_code = SHL_THREAD_TIMEOUT;
+            thread->return_val.return_message = "Alloted time elapsed before the thread was signalled";
+        }
+        else
+        {
+            thread->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
 
-				if (thread)
-				{
-					thread->user_data = data;
-					thread->handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) function, thread, CREATE_SUSPENDED, &thread->id); 	
-					result = 1;
-				}
+            shl_thread_set_native_return(&thread->return_val);            
+        }
+    }   
+    
+    return thread;    
+}
 
-			#else
-				thread->user_data = data;
-				thread->handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) function, thread, CREATE_SUSPENDED, &thread->id); 	
-				result = 1;
-			#endif
+SHLAPI void* shl_get_thread_data(void* thread_context)
+{
+    void* user_data = NULL;
+    
+    if (thread_context)
+    {
+        user_data = ((shl_thread*) thread_context)->user_data;        
+    }
+    
+    return user_data;
+}
 
-			return result;
-		}
+SHLAPI shl_thread* shl_get_thread_from_context(void* thread_context)
+{
+    shl_thread* thread = NULL;
+    
+    if (thread_context)
+    {
+        thread = (shl_thread*) thread_context;
+    }
+    
+    return thread;
+}
 
-		SHLAPI u32 shl_start_thread(shl_thread* thread)
-		{
-			u32 result = 0;
+SHLAPI shl_semaphore* shl_create_semaphore(shl_semaphore* semaphore, u32 initial_count, u32 maximum_count)
+{
+    if (semaphore)
+    {
+        if (initial_count <= maximum_count) 
+        {
+            semaphore->handle = CreateSemaphoreEx(0, initial_count, maximum_count, NULL, 0, SYNCHRONIZE | SEMAPHORE_MODIFY_STATE);
 
-			#if SHL_THREAD_ARG_CHECK
+            if (semaphore->handle)
+            {
+                semaphore->return_val.return_code = SHL_THREAD_SUCCESS;
+            }
+            else
+            {
+                semaphore->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+                semaphore->return_val.return_message = "Couldn't create semaphore object";
+                
+                shl_thread_set_native_return(&semaphore->return_val);
+            }
 
-				if (thread)
-				{
-					ResumeThread(thread->handle);
-					result = 1;
-				}
+        }
+        else 
+        {
+            semaphore->return_val.return_code = SHL_THREAD_INVALID_ARGS;
 
-			#else
-				ResumeThread(thread->handle);
-				result = 1;
-			#endif
+            semaphore->return_val.return_message = "Initial Count must be less than or equal to maximum count";
+        }
+        
+    }
 
-			return result;
+    return semaphore;
+    
+}
 
-			
-		}
+SHLAPI shl_semaphore* shl_semaphore_wait(shl_semaphore* semaphore)
+{
+    if (semaphore)
+    {
+        WaitForSingleObject(semaphore->handle, INFINITE);
 
-		SHLAPI u32 shl_pause_thread(shl_thread* thread)
-		{
-			u32 result = 0;
+        semaphore->return_val.return_code = SHL_THREAD_SUCCESS;
+    }
+    
+    return semaphore;
+}
 
-			#if SHL_THREAD_ARG_CHECK
+SHLAPI shl_semaphore* shl_semaphore_release(shl_semaphore* semaphore)
+{
+    
+    if (semaphore)
+    {
+        ReleaseSemaphore(semaphore->handle, 1, NULL);
 
-				if (thread)
-				{
-					SuspendThread(thread->handle);
-					result = 1;
-				}
+        semaphore->return_val.return_code = SHL_THREAD_SUCCESS;
+    }
+    
+    return semaphore;
+}
 
-			#else
-				SuspendThread(thread->handle);
-				result = 1;
-			#endif
+SHLAPI shl_mutex* shl_create_mutex(shl_mutex* mutex)
+{
+    if (mutex)
+    {
+        mutex->handle = CreateMutexEx(NULL, NULL, 0, SYNCHRONIZE);
 
-			return result;
-		}
+        if (mutex->handle) 
+        {
+            mutex->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else
+        {
+            mutex->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            shl_thread_set_native_return(&mutex->return_val);
+        }
+    }
 
-		SHLAPI u32 shl_terminate_thread(shl_thread* thread, u32 exit_code)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-
-				if (thread)
-				{
-					TerminateThread(thread->handle, exit_code);
-					result = 1;
-				}
-
-			#else
-				TerminateThread(thread->handle, exit_code);
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_wait_for_thread(shl_thread* thread)
-		{
-
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-
-				if (thread)
-				{
-					WaitForSingleObject(thread->handle, INFINITE);
-					result = 1;
-				}
-
-			#else
-				WaitForSingleObject(thread->handle, INFINITE);
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI void* shl_get_thread_associated_data(void* thread_context)
-		{
-			void* user_data = NULL;
-
-			#if SHL_THREAD_ARG_CHECK
-
-				if (thread_context)
-				{
-					user_data = ((shl_thread*) thread_context)->user_data;
-				}
-
-			#else
-				user_data = ((shl_thread*) thread_context)->user_data;
-			#endif
-
-			return user_data;
-		}
-
-		SHLAPI shl_thread* shl_get_thread_from_context(void* thread_context)
-		{
-			shl_thread* thread = NULL;
-
-			#if SHL_THREAD_ARG_CHECK
-
-				if (thread_context)
-				{
-					thread = (shl_thread*) thread_context;
-				}
-
-			#else
-				thread = (shl_thread*) thread_context;
-			#endif
-
-			return thread;
-		}
-
-		SHLAPI u32 shl_create_semaphore(shl_semaphore* semaphore, s32 initial_count, s32 maximum_count)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (semaphore)
-				{
-					semaphore->handle = CreateSemaphoreEx(0, initial_count, maximum_count, NULL, 0, SYNCHRONIZE | SEMAPHORE_MODIFY_STATE);
-					semaphore->full_event = CreateEvent(NULL, FALSE, TRUE, NULL);
-					result = 1;
-				}
-							
-			#else
-				semaphore->handle = CreateSemaphoreEx(0, initial_count, maximum_count, NULL, 0, SYNCHRONIZE | SEMAPHORE_MODIFY_STATE);	
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_semaphore_wait(shl_semaphore* semaphore)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (semaphore)
-				{
-					WaitForSingleObject(semaphore->handle, INFINITE);
-					SetEvent(semaphore->full_event);
-					result = 1;
-				}
-							
-			#else
-				WaitForSingleObject(semaphore->handle, INFINITE);
-				SetEvent(semaphore->full_event);
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_semaphore_release(shl_semaphore* semaphore)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (semaphore)
-				{
-					if (ReleaseSemaphore(semaphore->handle, 1, NULL) == FALSE)
-					{
-						ResetEvent(semaphore->full_event);
-
-						WaitForSingleObject(semaphore->full_event, INFINITE);
-						
-						ReleaseSemaphore(semaphore->handle, 1, NULL);
-					}
-					result = 1;
-				}
-							
-			#else
-				if (ReleaseSemaphore(semaphore->handle, 1, NULL) == FALSE)
-				{
-					ResetEvent(semaphore->full_event);
-
-					WaitForSingleObject(semaphore->full_event, INFINITE);
-					
-					ReleaseSemaphore(semaphore->handle, 1, NULL);
-				}
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_create_mutex(shl_mutex* mutex)
-		{
-			
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (mutex)
-				{
-					mutex->handle = CreateMutexEx(NULL, NULL, 0, SYNCHRONIZE);
-					result = 1;
-				}
-
-			#else
-				mutex->handle = CreateMutexEx(NULL, NULL, 0, SYNCHRONIZE);
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_mutex_lock(shl_mutex* mutex)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (mutex)
-				{
-					WaitForSingleObject(mutex->handle, INFINITE);
-					result = 1;
-				}
-							
-			#else
-				WaitForSingleObject(mutex->handle, INFINITE);
-				result = 1;
-			#endif
-
-			return result;
-		}
-
-		SHLAPI u32 shl_mutex_unlock(shl_mutex* mutex)
-		{
-			u32 result = 0;
-
-			#if SHL_THREAD_ARG_CHECK
-				if (mutex)
-				{
-					ReleaseMutex(mutex->handle);
-					result = 1;
-				}
-							
-			#else
-				ReleaseMutex(mutex->handle);
-				result = 1;
-			#endif
-
-			return result;			
-		}
+    return mutex;
+    
+}
 
 
-	#endif
+SHLAPI shl_mutex* shl_mutex_lock(shl_mutex* mutex)
+{
+    if (mutex)
+    {
+        WaitForSingleObject(mutex->handle, INFINITE);
+        mutex->return_val.return_code = SHL_THREAD_SUCCESS;
+    }
+    
+    return mutex;
+}
+
+SHLAPI shl_mutex* shl_mutex_unlock(shl_mutex* mutex)
+{
+    if (mutex)
+    {
+        if (ReleaseMutex(mutex->handle))
+        {
+            mutex->return_val.return_code = SHL_THREAD_SUCCESS;
+        }
+        else
+        {
+            mutex->return_val.return_code = SHL_THREAD_NATIVE_ERROR;
+            shl_thread_set_native_return(&mutex->return_val);
+        }
+    }
+    
+    return mutex;			
+}
+
 
 #endif
+
+#endif
+
+
+
 
 #undef SHLAPI
 #undef s32

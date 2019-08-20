@@ -12,8 +12,6 @@
 #define SHL_TIME_IMPLEMENTATION
 #include "shl_time.h"
 
-#include "shl_buffer.h"
-
 #if 0
 void time_test() 
 {
@@ -59,27 +57,6 @@ void time_test()
     
 	shl_display_time_struct(end_struct);
 }
-
-void thread_test() 
-{
-	
-	shl_time_init();
-	shl_thread thread1;
-	shl_thread thread2;
-
-	shl_create_semaphore(&can_produce, N, N);
-	shl_create_semaphore(&can_consume, 0, N);
-
-	shl_create_thread(&thread1, producer, 0, 0);
-	shl_create_thread(&thread2, consumer, 0, 0);
-
-	shl_start_thread(&thread1);
-	shl_start_thread(&thread2);
-
-
-	shl_wait_for_thread(&thread1, SHL_INF);
-	shl_wait_for_thread(&thread2, SHL_INF);
-}
 #endif
 
 #define N 5
@@ -123,24 +100,22 @@ unsigned long consumer(void* data)
 int main(int argc, char** argv)
 {
 
-	shl_buffer(int) arr = 0;
+	shl_time_init();
+	shl_thread thread1;
+	shl_thread thread2;
 
-	shl_buffer_expand(arr, 10);
-	printf("%d\n", shl_buffer_capacity(arr));
-	printf("%d\n", shl_buffer_length(arr));
+	shl_create_semaphore(&can_produce, N, N);
+	shl_create_semaphore(&can_consume, 0, N);
 
-	for (int i = 0; i < shl_buffer_length(arr); i++) 
-	{
-		arr[i] = i + 1;
-	}
+	shl_create_thread(&thread1, producer, 0, 0);
+	shl_create_thread(&thread2, consumer, 0, 0);
 
-	shl_buffer_push(arr, 11);
+	shl_start_thread(&thread1);
+	shl_start_thread(&thread2);
 
-	printf("%d\n", shl_buffer_capacity(arr));
-	printf("%d\n", shl_buffer_length(arr));
 
-	for (int i = 0; i < shl_buffer_length(arr); i++) 
-	{
-		printf("%d\n", arr[i]);
-	}
+	shl_wait_for_thread(&thread1, SHL_INF);
+	shl_wait_for_thread(&thread2, SHL_INF);
+
+
 }
